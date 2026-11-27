@@ -5,13 +5,14 @@ import { OPENING_HOURS } from '../../../../shared/schedule';
 import { formatTime } from '../../../../shared/slots';
 import { I18n } from '../../core/i18n/i18n.service';
 import { STUDIO } from '../../core/studio';
+import { StudioMap } from '../../shared-ui/studio-map';
 
 const PLACEHOLDER_COUNT = 8;
 const COLLAPSED_COUNT = 4;
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [RouterLink, StudioMap],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

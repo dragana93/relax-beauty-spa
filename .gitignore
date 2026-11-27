@@ -51,3 +51,9 @@ Thumbs.db
 # Database exports contain personal data
 *.sql.bak
 /backups/
+
+# Google service account keys and Supabase CLI local state
+*service-account*.json
+google-key*.json
+/supabase/.temp/
+/supabase/.branches/

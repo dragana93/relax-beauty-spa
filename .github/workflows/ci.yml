@@ -1,0 +1,39 @@
+# Checks every push and pull request: type check, tests (in-memory Postgres, no secrets) and
+# the production build. Deployment is done by Cloudflare Workers Builds when `main` changes
+# (see docs/SETUP.md), so this workflow never needs Cloudflare, Supabase or Google keys.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check (Worker)
+        run: npm run typecheck
+
+      - name: Tests (booking rules, API, emails, Google sync)
+        run: npm test
+
+      - name: Production build
+        run: npm run build

@@ -4,7 +4,7 @@ import { findService, formatPrice } from '../../shared/catalog';
 import { LANG_NAMES, LANGS, LOCALES, type Lang } from '../../shared/lang';
 import { SCHEDULE } from '../../shared/schedule';
 import { formatTime } from '../../shared/slots';
-import { STUDIO } from '../../shared/studio';
+import { mapLink, STUDIO } from '../../shared/studio';
 import { bookingIcs } from './ics';
 
 export interface BookingRow {
@@ -124,7 +124,7 @@ export function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-function formatLongDate(date: string, lang: Lang): string {
+export function formatLongDate(date: string, lang: Lang): string {
   return new Intl.DateTimeFormat(LOCALES[lang], {
     weekday: 'long',
     day: 'numeric',
@@ -187,7 +187,7 @@ export function customerEmail(row: BookingRow, ownerEmail?: string): RenderedEma
     [t.duration, `${duration} ${t.minutes}`],
     [t.price, formatPrice(row.price_cents, lang)],
   ];
-  if (STUDIO.address) rows.push([t.address, STUDIO.address, STUDIO.mapUrl || undefined]);
+  if (STUDIO.address) rows.push([t.address, STUDIO.address, mapLink() || undefined]);
   if (STUDIO.phone) rows.push([t.phone, STUDIO.phone, `tel:${STUDIO.phone.replace(/\s/g, '')}`]);
 
   const after = [t.cancel];
@@ -198,12 +198,10 @@ export function customerEmail(row: BookingRow, ownerEmail?: string): RenderedEma
   const subject = t.subject(row.reference);
   return {
     subject,
-    html: layout(
-      subject,
-      before.map(escapeHtml),
-      rows,
-      [...after.map(escapeHtml), `${escapeHtml(t.closing)}<br>${escapeHtml(STUDIO.name)}`],
-    ),
+    html: layout(subject, before.map(escapeHtml), rows, [
+      ...after.map(escapeHtml),
+      `${escapeHtml(t.closing)}<br>${escapeHtml(STUDIO.name)}`,
+    ]),
     text: textVersion(before, rows, [...after, `${t.closing}\n${STUDIO.name}`]),
     ics: bookingIcs(row),
   };

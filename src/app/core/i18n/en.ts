@@ -81,7 +81,17 @@ export const en: Dictionary = {
     hours: 'Opening hours',
     closed: 'Closed',
     map: 'Open map',
+    mapTitle: 'Studio location on Google Maps',
     days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+  },
+  cookies: {
+    label: 'Cookies',
+    text: 'We use Google Maps to show the map. It sets its own cookies and receives your IP address. We use no analytics or marketing cookies.',
+    accept: 'Accept',
+    reject: 'Reject',
+    more: 'More about privacy',
+    settings: 'Cookie settings',
+    mapBlocked: 'The map is shown once you accept Google Maps cookies.',
   },
   services: {
     title: 'Services and prices',
@@ -176,7 +186,10 @@ export const en: Dictionary = {
         h: 'Your rights',
         p: 'You may ask to see, correct or delete your data, and complain to the supervisory authority (AZOP).',
       },
-      { h: 'Cookies', p: 'We use no analytics or marketing cookies.' },
+      {
+        h: 'Cookies and the map',
+        p: 'We use no analytics or marketing cookies. The map on the home page comes from Google Maps (Google Ireland Ltd.) and loads only if you accept it in the cookie notice. Google then processes your IP address and may set its own cookies. We remember your choice only in your browser, and you can change it at any time with "Cookie settings" at the bottom of the page.',
+      },
       {
         h: 'Booking rules',
         p: 'Appointments can be booked from 12 hours to 60 days ahead. You may cancel up to 24 hours before the start.',

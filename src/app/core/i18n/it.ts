@@ -84,7 +84,17 @@ export const it: Dictionary = {
     hours: 'Orari di apertura',
     closed: 'Chiuso',
     map: 'Apri la mappa',
+    mapTitle: 'Posizione dello studio su Google Maps',
     days: ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'],
+  },
+  cookies: {
+    label: 'Cookie',
+    text: 'Per mostrare la mappa usiamo Google Maps, che imposta i propri cookie e riceve il tuo indirizzo IP. Non usiamo cookie analitici né di marketing.',
+    accept: 'Accetta',
+    reject: 'Rifiuta',
+    more: 'Maggiori informazioni sulla privacy',
+    settings: 'Impostazioni cookie',
+    mapBlocked: 'La mappa viene mostrata dopo che avrai accettato i cookie di Google Maps.',
   },
   services: {
     title: 'Servizi e prezzi',
@@ -122,7 +132,8 @@ export const it: Dictionary = {
       emailRequired: 'Inserisci il tuo indirizzo email.',
       email: 'Inserisci un indirizzo email valido, ad esempio ana@esempio.it.',
       phoneRequired: 'Inserisci il tuo numero di telefono.',
-      phone: 'Inserisci un numero di telefono valido (da 6 a 15 cifre), ad esempio +385 91 123 4567.',
+      phone:
+        'Inserisci un numero di telefono valido (da 6 a 15 cifre), ad esempio +385 91 123 4567.',
       note: 'La nota può contenere al massimo 500 caratteri.',
       privacyAck: "Conferma di aver letto l'informativa.",
     },
@@ -142,7 +153,8 @@ export const it: Dictionary = {
       LIMIT_REACHED:
         'Questo indirizzo email ha già il numero massimo di prenotazioni future. Contatta lo studio.',
       INVALID: 'Controlla i tuoi dati e riprova.',
-      SERVER_ERROR: 'Non è stato possibile confermare la prenotazione. Riprova: la prenotazione non verrà duplicata.',
+      SERVER_ERROR:
+        'Non è stato possibile confermare la prenotazione. Riprova: la prenotazione non verrà duplicata.',
     },
     successTitle: 'Il tuo appuntamento è prenotato',
     reference: 'Numero di prenotazione',
@@ -179,7 +191,10 @@ export const it: Dictionary = {
         h: 'I tuoi diritti',
         p: "Puoi chiedere di accedere ai tuoi dati, correggerli o cancellarli, e presentare reclamo all'autorità croata per la protezione dei dati (AZOP).",
       },
-      { h: 'Cookie', p: 'Non usiamo cookie analitici né di marketing.' },
+      {
+        h: 'Cookie e mappa',
+        p: 'Non usiamo cookie analitici né di marketing. La mappa nella pagina iniziale proviene da Google Maps (Google Ireland Ltd.) e viene caricata solo se la accetti nell’avviso sui cookie. Google tratta quindi il tuo indirizzo IP e può impostare i propri cookie. Ricordiamo la tua scelta solo nel tuo browser e puoi cambiarla in qualsiasi momento con «Impostazioni cookie» in fondo alla pagina.',
+      },
       {
         h: 'Regole di prenotazione',
         p: "Gli appuntamenti si possono prenotare da 12 ore a 60 giorni prima. Puoi disdire fino a 24 ore prima dell'inizio.",

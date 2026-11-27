@@ -45,17 +45,36 @@ describe('availableStarts', () => {
   it('fits the booking and buffer inside opening hours', () => {
     const result = starts('2026-12-07');
     expect(result[0]).toBe(9 * 60);
-    expect(formatTime(result.at(-1)!)).toBe('17:30');
+    expect(formatTime(result.at(-1)!)).toBe('17:45');
+  });
+  it('offers a start every 15 minutes', () => {
+    expect(starts('2026-12-07').slice(0, 4).map(formatTime)).toEqual([
+      '09:00',
+      '09:15',
+      '09:30',
+      '09:45',
+    ]);
   });
   it('uses shorter Saturday hours and closes on Sunday', () => {
-    expect(formatTime(starts('2026-12-12').at(-1)!)).toBe('12:30');
+    expect(formatTime(starts('2026-12-12').at(-1)!)).toBe('12:45');
     expect(starts('2026-12-13')).toEqual([]);
   });
   it('removes every start that overlaps an occupied cell', () => {
     const result = starts('2026-12-07', 60, bookingCells(600, 60)).map(formatTime);
     expect(result).not.toContain('09:00'); // its buffer would reach 10:00
     expect(result).not.toContain('11:00');
-    expect(result[0]).toBe('11:30');
+    expect(result[0]).toBe('11:15'); // right after the 10:00-11:00 booking and its cleanup
+  });
+  it('offers every time before and after a booking that leaves 15 minutes of cleanup', () => {
+    // A 30-minute booking at 10:30 occupies 10:30-11:15 (with cleanup).
+    const result = starts('2026-12-07', 30, bookingCells(630, 30)).map(formatTime);
+    expect(result.slice(0, 5)).toEqual(['09:00', '09:15', '09:30', '09:45', '11:15']);
+    expect(result).not.toContain('10:00'); // would end at 10:30, with no time for cleanup
+  });
+  it('cannot fit a 30-minute treatment and cleanup before a 09:30 booking', () => {
+    // The reported case: with 09:30 taken, 09:00 would end exactly at 09:30.
+    const result = starts('2026-12-07', 30, bookingCells(570, 30)).map(formatTime);
+    expect(result[0]).toBe('10:15');
   });
   it('enforces the minimum notice', () => {
     const evening = at('2026-12-06T21:00:00Z'); // 22:00 in Zagreb

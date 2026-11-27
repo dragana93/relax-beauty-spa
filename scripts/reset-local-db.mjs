@@ -1,6 +1,7 @@
-// Deletes the LOCAL development database only (test bookings). Stop `npm start` first.
-// `npm run db:reset` then re-creates it from the migrations.
+// `npm run db:reset`: deletes the LOCAL development database (test bookings only).
+// Stop `npm start` first; the next `npm start` creates it again, empty.
 import { rmSync } from 'node:fs';
+import { LOCAL_DB_DIR } from './dev-vars.mjs';
 
-rmSync('.wrangler/state/v3/d1', { recursive: true, force: true });
-console.log('Local database removed.');
+rmSync(LOCAL_DB_DIR, { recursive: true, force: true });
+console.log('Local database deleted.');

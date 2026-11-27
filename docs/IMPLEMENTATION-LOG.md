@@ -130,7 +130,8 @@ These files are used by **both** the website and the API, so the rules can't dif
 | [api-types.ts](../shared/api-types.ts) | Data formats between website and API |
 
 **Booking rules (editable in `schedule.ts`):**
-- Appointments can start every 30 minutes.
+- Appointments can start every 15 minutes (changed from 30 on 27 November 2026, so that every
+  time that leaves room for the cleanup break is offered, before and after other bookings).
 - 15 minutes of cleanup time is reserved after each appointment.
 - Bookings need at least 12 hours' notice and can be made up to 60 days ahead.
 - One email address can have at most 3 upcoming bookings.
@@ -367,6 +368,32 @@ fields were required, and an empty field showed the same message as a wrongly fi
    Messages appear when you leave a field or press "Next", not while typing.
 6. **Tests.** Six new API cases: a phone with no digits, too few or too many digits, and an empty
    name, email or phone.
+
+## Step 19: Evening list of the next day's bookings
+
+Date: 27 November 2026
+
+**Why emails were not arriving:** the Resend key in `.dev.vars` was commented out, so the Worker
+had email switched off. Bookings were still saved. `.dev.vars.example` also suggested a Hotmail
+address as the sender, which Resend refuses. It now explains that the sender must be on a
+verified domain, or `onboarding@resend.dev` for tests.
+
+**What:** at 21:00 studio time the owner gets every booking of the next day, sorted by time, with
+cancellations apart. A CSV file for Excel is attached as a daily copy. Code:
+[worker/email/daily-digest.ts](../worker/email/daily-digest.ts) and
+[digest-template.ts](../worker/email/digest-template.ts). It runs from the existing 15-minute cron
+and is recorded in the new `daily_digests` table (migration `0002`).
+
+- **Why 21:00:** with 12 hours' notice, nobody can book a 09:00 appointment after 21:00 the
+  evening before, so the list is final. A test checks this against the opening hours.
+- **Retries:** a failed send is retried on every cron run until midnight, up to 5 attempts. A day
+  is never sent twice.
+- **Safety:** customer input is escaped in the email. CSV cells that Excel would run as formulas
+  get an apostrophe, and phone numbers stay as text (`+385`, leading zero).
+- **Preview:** http://localhost:4200/api/dev/digest/YYYY-MM-DD (and `.csv`), only with
+  `EMAIL_PREVIEW=true` on your PC.
+- **Tests:** [tests/digest.spec.ts](../tests/digest.spec.ts) plus API cases for missing name,
+  email or phone. 73 tests, all passing.
 
 ---
 

@@ -84,7 +84,17 @@ export const de: Dictionary = {
     hours: 'Öffnungszeiten',
     closed: 'Geschlossen',
     map: 'Karte öffnen',
+    mapTitle: 'Lage des Studios auf Google Maps',
     days: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+  },
+  cookies: {
+    label: 'Cookies',
+    text: 'Für die Karte nutzen wir Google Maps. Google setzt eigene Cookies und erhält Ihre IP-Adresse. Analyse- oder Marketing-Cookies verwenden wir nicht.',
+    accept: 'Akzeptieren',
+    reject: 'Ablehnen',
+    more: 'Mehr zum Datenschutz',
+    settings: 'Cookie-Einstellungen',
+    mapBlocked: 'Die Karte wird angezeigt, sobald Sie die Cookies von Google Maps akzeptieren.',
   },
   services: {
     title: 'Leistungen und Preise',
@@ -180,7 +190,10 @@ export const de: Dictionary = {
         h: 'Ihre Rechte',
         p: 'Sie können Auskunft, Berichtigung oder Löschung Ihrer Daten verlangen und sich bei der kroatischen Datenschutzbehörde (AZOP) beschweren.',
       },
-      { h: 'Cookies', p: 'Wir verwenden keine Analyse- oder Marketing-Cookies.' },
+      {
+        h: 'Cookies und Karte',
+        p: 'Wir verwenden keine Analyse- oder Marketing-Cookies. Die Karte auf der Startseite stammt von Google Maps (Google Ireland Ltd.) und wird nur geladen, wenn Sie im Cookie-Hinweis zustimmen. Google verarbeitet dann Ihre IP-Adresse und kann eigene Cookies setzen. Ihre Wahl speichern wir nur in Ihrem Browser; Sie können sie jederzeit über „Cookie-Einstellungen“ unten auf der Seite ändern.',
+      },
       {
         h: 'Buchungsregeln',
         p: 'Termine können frühestens 12 Stunden und höchstens 60 Tage im Voraus gebucht werden. Eine Stornierung ist bis 24 Stunden vor Beginn möglich.',

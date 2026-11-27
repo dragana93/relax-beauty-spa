@@ -1,33 +1,26 @@
-// Runs the Worker routes against a real local D1 database (in memory).
-import { readFileSync } from 'node:fs';
+// Runs the Worker routes against a real Postgres database (PGlite, in memory).
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getPlatformProxy } from 'wrangler';
 import { LANGS } from '../shared/lang';
 import { bookableDates } from '../shared/slots';
 import { SCHEDULE } from '../shared/schedule';
 import { retryPendingEmails } from '../worker/email/booking-emails';
 import type { Bindings } from '../worker/http';
 import { app } from '../worker/index';
+import { parseAddress } from '../worker/email/send';
 import { createReference, REFERENCE_ALPHABET } from '../worker/security/reference';
+import { createTestDb, type TestDb } from './helpers/pglite';
+import { MAIL_ENV, stubBrevo, type MailStub } from './helpers/brevo';
 
-let proxy: Awaited<ReturnType<typeof getPlatformProxy<{ DB: D1Database }>>>;
+let db: TestDb;
 const date = bookableDates(new Date())[7]!;
 
 beforeAll(async () => {
-  proxy = await getPlatformProxy<{ DB: D1Database }>({ persist: false });
-  const sql = readFileSync('migrations/0001_init.sql', 'utf8').replace(/--.*$/gm, '');
-  for (const statement of sql.split(';').filter((s) => s.trim())) {
-    await proxy.env.DB.prepare(statement).run();
-  }
+  db = await createTestDb();
 }, 60_000);
 
-afterAll(() => proxy?.dispose());
+afterAll(() => db?.pg.close());
 
-beforeEach(async () => {
-  await proxy.env.DB.batch(
-    ['occupied_slots', 'bookings', 'blocks'].map((t) => proxy.env.DB.prepare(`DELETE FROM ${t}`)),
-  );
-});
+beforeEach(() => db.reset());
 
 function booking(overrides: Record<string, unknown> = {}) {
   return {
@@ -46,7 +39,7 @@ function booking(overrides: Record<string, unknown> = {}) {
 
 /** Only the database: email settings from a local .dev.vars must never reach the tests. */
 function baseEnv(): Bindings {
-  return { DB: proxy.env.DB };
+  return { DB: db.sql };
 }
 
 function post(
@@ -68,9 +61,7 @@ function post(
 }
 
 async function count(table: string): Promise<number> {
-  const row = await proxy.env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table}`).first<{
-    n: number;
-  }>();
+  const [row] = await db.sql.query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM ${table}`);
   return row!.n;
 }
 
@@ -119,17 +110,17 @@ describe('POST /api/bookings', () => {
   });
 
   it('rolls back the booking row when any cell is already taken', async () => {
-    // Occupy only a late cell, so the first inserts of the batch succeed before it fails.
-    await proxy.env.DB.batch([
-      proxy.env.DB.prepare(
-        "INSERT INTO blocks (public_id, date, start_min, end_min, created_at) VALUES ('b1', ?, 660, 675, 'x')",
-      ).bind(date),
-      proxy.env.DB.prepare(
-        "INSERT INTO occupied_slots (date, slot_min, block_ref) VALUES (?, 660, 'b1')",
-      ).bind(date),
-    ]);
+    // Occupy only a late cell, so the booking row is written before the cells fail.
+    await db.sql.query(
+      "INSERT INTO blocks (public_id, date, start_min, end_min, created_at) VALUES ('b1', $1, 660, 675, 'x')",
+      [date],
+    );
+    await db.sql.query(
+      "INSERT INTO occupied_slots (date, slot_min, block_ref) VALUES ($1, 660, 'b1')",
+      [date],
+    );
     const { insertBooking, conflictType } = await import('../worker/db/bookings');
-    const error = await insertBooking(proxy.env.DB, {
+    const error = await insertBooking(db.sql, {
       reference: createReference(),
       idempotencyKey: crypto.randomUUID(),
       date,
@@ -206,6 +197,13 @@ describe('POST /api/bookings', () => {
     expect(await count('bookings')).toBe(0);
   });
 
+  it.each(['name', 'email', 'phone'])('rejects a booking without %s', async (field) => {
+    const body: Record<string, unknown> = booking();
+    delete body[field];
+    expect((await post(body)).status).toBe(422);
+    expect(await count('bookings')).toBe(0);
+  });
+
   it.each(LANGS)('stores a booking made in %s', async (lang) => {
     expect((await post(booking({ lang }))).status).toBe(201);
   });
@@ -224,44 +222,29 @@ describe('POST /api/bookings', () => {
   });
 });
 
-describe('confirmation emails', () => {
-  interface Sent {
-    headers: Headers;
-    body: {
-      from: string;
-      to: string[];
-      subject: string;
-      html: string;
-      text: string;
-      reply_to?: string;
-      attachments?: { filename: string; content: string }[];
-    };
-  }
-  let sent: Sent[];
-  let providerStatus: number;
+describe('confirmation emails (Brevo)', () => {
+  let mail: MailStub;
 
   beforeEach(() => {
-    sent = [];
-    providerStatus = 200;
-    // Stands in for Resend: nothing leaves the machine.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (_url: string, init: RequestInit) => {
-        sent.push({ headers: new Headers(init.headers), body: JSON.parse(String(init.body)) });
-        return Response.json({ id: 'test' }, { status: providerStatus });
-      }),
-    );
+    mail = stubBrevo();
   });
   afterEach(() => vi.unstubAllGlobals());
 
   function mailEnv(): Bindings {
-    return {
-      DB: proxy.env.DB,
-      RESEND_API_KEY: 're_test',
-      MAIL_FROM: 'Studio <onboarding@resend.dev>',
-      OWNER_EMAIL: 'owner@example.com',
-    };
+    return { DB: db.sql, ...MAIL_ENV };
   }
+
+  it('reads the sender name and address for Brevo', () => {
+    expect(parseAddress('Relax Studio <rezervacije@example.hr>')).toEqual({
+      name: 'Relax Studio',
+      email: 'rezervacije@example.hr',
+    });
+    expect(parseAddress('"Relax, Beauty" <a@example.hr>')).toEqual({
+      name: 'Relax, Beauty',
+      email: 'a@example.hr',
+    });
+    expect(parseAddress(' a@example.hr ')).toEqual({ email: 'a@example.hr' });
+  });
 
   /** Collects the work a booking schedules after its response. */
   function context() {
@@ -275,11 +258,14 @@ describe('confirmation emails', () => {
   }
 
   async function mailStatus(reference: string) {
-    return proxy.env.DB.prepare(
-      'SELECT customer_mail, owner_mail, mail_attempts FROM bookings WHERE reference = ?',
-    )
-      .bind(reference)
-      .first<{ customer_mail: string; owner_mail: string; mail_attempts: number }>();
+    const [row] = await db.sql.query<{
+      customer_mail: string;
+      owner_mail: string;
+      mail_attempts: number;
+    }>('SELECT customer_mail, owner_mail, mail_attempts FROM bookings WHERE reference = $1', [
+      reference,
+    ]);
+    return row;
   }
 
   it('sends the customer and owner emails after a booking', async () => {
@@ -294,25 +280,30 @@ describe('confirmation emails', () => {
     expect(emailQueued).toBe(true);
     await done();
 
-    expect(sent).toHaveLength(2);
-    const customer = sent.find((m) => m.body.to[0] === body.email)!;
-    const owner = sent.find((m) => m.body.to[0] === 'owner@example.com')!;
+    expect(mail.sent).toHaveLength(2);
+    const customer = mail.sent.find((m) => m.fields['to'] === body.email)!;
+    const owner = mail.sent.find((m) => m.fields['to'] === 'owner@example.com')!;
 
-    expect(customer.body.subject).toBe(`Buchungsbestätigung ${reference}`);
-    expect(customer.headers.get('Idempotency-Key')).toBe(`booking/${reference}/customer`);
-    expect(customer.headers.get('Authorization')).toBe('Bearer re_test');
-    expect(customer.body.reply_to).toBe('owner@example.com');
-    expect(customer.body.html).toContain('&lt;b&gt;Ana&lt;/b&gt;');
-    expect(customer.body.html).not.toContain('<b>Ana');
-    expect(customer.body.html).not.toContain('Bitte ruhig'); // The note is for the owner only.
-    const ics = Buffer.from(customer.body.attachments![0]!.content, 'base64').toString('utf8');
-    expect(customer.body.attachments![0]!.filename).toBe(`${reference}.ics`);
-    expect(ics).toContain(`UID:${reference}@relax-beauty-spa`);
-    expect(ics).toMatch(/DTSTART:\d{8}T\d{6}Z/);
+    expect(customer.url).toBe('https://api.brevo.com/v3/smtp/email');
+    expect(customer.headers.get('api-key')).toBe('xkeysib-test');
+    expect(customer.fields['from']).toBe(MAIL_ENV.MAIL_FROM);
+    expect(customer.fields['subject']).toBe(`Buchungsbestätigung ${reference}`);
+    expect(customer.fields['messageKey']).toBe(`booking/${reference}/customer`);
+    expect(customer.fields['replyTo']).toBe('owner@example.com');
+    expect(customer.fields['html']).toContain('&lt;b&gt;Ana&lt;/b&gt;');
+    expect(customer.fields['html']).not.toContain('<b>Ana');
+    expect(customer.fields['html']).not.toContain('Bitte ruhig'); // The note is for the owner only.
+    expect(customer.fields['text']).toContain(reference);
+    const [ics] = customer.attachments;
+    expect(ics!.filename).toBe(`${reference}.ics`);
+    expect(ics!.content).toContain(`UID:${reference}@relax-beauty-spa`);
+    expect(ics!.content).toMatch(/DTSTART:\d{8}T\d{6}Z/);
 
-    expect(owner.body.subject).toMatch(/^Nova rezervacija: /);
-    expect(owner.body.reply_to).toBe(body.email);
-    expect(owner.body.html).toContain('Bitte ruhig');
+    expect(owner.fields['subject']).toMatch(/^Nova rezervacija: /);
+    expect(owner.fields['html']).toContain(reference);
+    expect(customer.fields['html']).toContain(reference);
+    expect(owner.fields['replyTo']).toBe(body.email);
+    expect(owner.fields['html']).toContain('Bitte ruhig');
 
     expect(await mailStatus(reference)).toEqual({
       customer_mail: 'sent',
@@ -322,7 +313,7 @@ describe('confirmation emails', () => {
   });
 
   it('keeps the booking when sending fails, and the retry job sends it later', async () => {
-    providerStatus = 500;
+    mail.status = 500;
     const { ctx, done } = context();
     const res = await post(booking(), {}, mailEnv(), ctx);
     const { reference } = (await res.json()) as { reference: string };
@@ -333,23 +324,23 @@ describe('confirmation emails', () => {
       owner_mail: 'failed',
     });
 
-    providerStatus = 200;
+    mail.status = 201;
     // Fresh bookings are left alone; a few minutes later the job picks them up.
-    expect(await retryPendingEmails(mailEnv())).toBe(0);
+    expect(await retryPendingEmails(mailEnv(), db.sql)).toBe(0);
     const later = new Date(Date.now() + 5 * 60_000);
-    expect(await retryPendingEmails(mailEnv(), later)).toBe(1);
+    expect(await retryPendingEmails(mailEnv(), db.sql, later)).toBe(1);
     expect(await mailStatus(reference)).toEqual({
       customer_mail: 'sent',
       owner_mail: 'sent',
       mail_attempts: 2,
     });
-    expect(await retryPendingEmails(mailEnv(), later)).toBe(0);
+    expect(await retryPendingEmails(mailEnv(), db.sql, later)).toBe(0);
   });
 
   it('sends nothing and promises nothing when email is not configured', async () => {
     const res = await post(booking());
     expect(await res.json()).toMatchObject({ emailQueued: false });
-    expect(sent).toHaveLength(0);
+    expect(mail.sent).toHaveLength(0);
   });
 
   it('hides the email preview unless it is enabled locally', async () => {

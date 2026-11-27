@@ -124,9 +124,6 @@
             }
           </dd>
         </dl>
-        @if (studio.mapUrl) {
-          <a [href]="studio.mapUrl" target="_blank" rel="noopener">{{ t.contact.map }}</a>
-        }
       </div>
       <div class="card">
         <h3>{{ t.contact.hours }}</h3>
@@ -143,5 +140,6 @@
         </table>
       </div>
     </div>
+    <app-studio-map />
   </div>
 </section>

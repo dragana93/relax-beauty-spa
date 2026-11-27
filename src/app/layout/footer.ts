@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Consent } from '../core/consent';
 import { I18n } from '../core/i18n/i18n.service';
 
 @Component({
@@ -13,6 +14,9 @@ import { I18n } from '../core/i18n/i18n.service';
           <a [routerLink]="i18n.link('services')">{{ i18n.t().nav.services }}</a>
           <a [routerLink]="i18n.link('booking')">{{ i18n.t().common.book }}</a>
           <a [routerLink]="i18n.link('privacy')">{{ i18n.t().privacy.title }}</a>
+          <button type="button" class="link" (click)="consent.reopen()">
+            {{ i18n.t().cookies.settings }}
+          </button>
         </nav>
         <p>© {{ year }} Dijana Savanović – Relax, Beauty and Spa Studio</p>
       </div>
@@ -35,10 +39,20 @@ import { I18n } from '../core/i18n/i18n.service';
       column-gap: 1.5rem;
       margin-block: 1rem;
     }
-    nav a {
+    nav a,
+    .link {
       display: inline-flex;
       align-items: center;
       min-height: 44px;
+    }
+    .link {
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--gold-deep);
+      font: inherit;
+      text-decoration: underline;
+      cursor: pointer;
     }
     p {
       margin: 0;
@@ -49,5 +63,6 @@ import { I18n } from '../core/i18n/i18n.service';
 })
 export class Footer {
   protected readonly i18n = inject(I18n);
+  protected readonly consent = inject(Consent);
   protected readonly year = new Date().getFullYear();
 }

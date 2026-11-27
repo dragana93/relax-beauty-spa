@@ -2,13 +2,14 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { I18n } from './core/i18n/i18n.service';
 import { STUDIO } from './core/studio';
+import { CookieBanner } from './layout/cookie-banner';
 import { Footer } from './layout/footer';
 import { Header } from './layout/header';
 import { StickyBook } from './layout/sticky-book';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Header, Footer, StickyBook],
+  imports: [RouterOutlet, Header, Footer, StickyBook, CookieBanner],
   template: `
     <button type="button" class="skip-link" (click)="main.focus()">
       {{ i18n.t().common.skipToContent }}
@@ -20,6 +21,7 @@ import { StickyBook } from './layout/sticky-book';
     <main #main tabindex="-1"><router-outlet /></main>
     <app-footer />
     <app-sticky-book />
+    <app-cookie-banner />
   `,
 })
 export class App {

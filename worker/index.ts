@@ -1,5 +1,8 @@
 import { Hono } from 'hono';
+import { useDb } from './db/sql';
 import { retryPendingEmails } from './email/booking-emails';
+import { sendDailyDigestIfDue } from './email/daily-digest';
+import { retryPendingSync } from './google/sync';
 import { fail, type AppEnv, type Bindings } from './http';
 import { availability } from './routes/availability';
 import { bookings } from './routes/bookings';
@@ -19,6 +22,14 @@ app.use('*', async (c, next) => {
 });
 
 app.get('/health', (c) => c.json({ ok: true }));
+
+// Every other route gets a database connection for the length of the request.
+app.use('*', (c, next) =>
+  useDb(c.env, async (db) => {
+    c.set('db', db);
+    await next();
+  }),
+);
 app.route('/availability', availability);
 app.route('/bookings', bookings);
 app.route('/dev', dev);
@@ -30,10 +41,26 @@ app.onError((error, c) => {
   return fail(c, 500, 'SERVER_ERROR');
 });
 
+/** Every 15 minutes: retry emails and Google copies, and send the evening list when due. */
+export async function runScheduled(env: Bindings, now = new Date()): Promise<void> {
+  await useDb(env, async (db) => {
+    const tasks: [string, () => Promise<unknown>][] = [
+      ['emails', () => retryPendingEmails(env, db, now)],
+      ['google', () => retryPendingSync(env, db, now)],
+      ['digest', () => sendDailyDigestIfDue(env, db, now)],
+    ];
+    // One connection handles one query at a time, so the tasks run one after another.
+    for (const [label, task] of tasks) {
+      await task().catch((error) =>
+        console.error(`Scheduled ${label} failed:`, error instanceof Error ? error.message : error),
+      );
+    }
+  });
+}
+
 export default {
   fetch: app.fetch,
-  /** Cron trigger (see wrangler.jsonc): retries emails that failed. */
   scheduled(_controller, env, ctx) {
-    ctx.waitUntil(retryPendingEmails(env));
+    ctx.waitUntil(runScheduled(env));
   },
 } satisfies ExportedHandler<Bindings>;

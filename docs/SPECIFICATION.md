@@ -119,7 +119,7 @@ wrangler.jsonc
 
 **Catalog and hours** live in `shared/`, used by both UI and API. The server takes duration and price from its own copy and never trusts the browser. Changing them needs a redeploy; holidays and absences are handled in admin.
 
-**Scheduling defaults (editable config):** 15-min storage grid, start times every 30 min, 15-min cleanup buffer after each booking, minimum 12 h notice, 60-day window, customer cancellation up to 24 h before. Booking plus buffer must fit within opening hours.
+**Scheduling defaults (editable config):** 15-min storage grid, start times every 15 min, 15-min cleanup buffer after each booking, minimum 12 h notice, 60-day window, customer cancellation up to 24 h before. Booking plus buffer must fit within opening hours.
 
 ### API
 

@@ -1,12 +1,28 @@
 # Copy this file to .dev.vars (which git ignores) and fill in your values.
-# Restart `npm start` after changing it.
+# Restart `npm start` after changing it. Step-by-step account setup: docs/SETUP.md.
 
-# Shows the emails of local bookings at http://localhost:4200/api/dev/emails, without sending.
+# --- Database ---
+# Leave DATABASE_URL out to use the local database that `npm start` starts by itself
+# (data in .wrangler/local-db, `npm run db:reset` empties it). No account needed.
+# To use the Supabase STAGING project instead (never production on your PC):
+# Project → Connect → "Transaction pooler" (port 6543). Used by the Worker.
+# DATABASE_URL="postgresql://postgres.xxxxxxxx:PASSWORD@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+# Project → Connect → "Session pooler" (port 5432). Used only by `npm run db:push`.
+# SUPABASE_DB_URL="postgresql://postgres.xxxxxxxx:PASSWORD@aws-0-eu-central-1.pooler.supabase.com:5432/postgres"
+
+# --- Email preview without sending ---
+# http://localhost:4200/api/dev/emails and /api/dev/digest/YYYY-MM-DD (add .csv).
 EMAIL_PREVIEW=true
 
-# To really send emails, create a free account at https://resend.com and an API key.
-# Without a verified domain, Resend's test sender can only deliver to the email address
-# of your Resend account, so use that address when you make a test booking.
-# RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
-# MAIL_FROM="draganasavanovic1993@hotmail.com"
-# OWNER_EMAIL="draganasavanovic1993@hotmail.com"
+# --- Email (Brevo, free: 300 emails a day, no credit card) ---
+# Brevo -> SMTP & API -> API Keys -> Generate a new API key.
+# MAIL_FROM must be a sender verified in Brevo (Senders, domains & dedicated IPs).
+# BREVO_API_KEY=xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# MAIL_FROM="Relax, Beauty and Spa Studio <your-verified-address@example.com>"
+# OWNER_EMAIL=your-address@example.com
+
+# --- Google Calendar and Google Sheets (service account) ---
+# The whole JSON key on one line, inside single quotes.
+# GOOGLE_SERVICE_ACCOUNT_KEY='{"type":"service_account","client_email":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n", ...}'
+# GOOGLE_CALENDAR_ID=a-test-calendar-id@group.calendar.google.com
+# GOOGLE_SHEET_ID=1AbCdEf...from-the-sheet-url

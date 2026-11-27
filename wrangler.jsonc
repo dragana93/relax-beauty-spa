@@ -3,27 +3,19 @@
   "name": "relax-beauty-spa",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
+  // postgres.js (the Supabase connection) needs Node.js APIs and TCP sockets.
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "dist/relax-beauty-spa/browser",
     "html_handling": "drop-trailing-slash",
     "not_found_handling": "404-page",
     "run_worker_first": ["/api/*"]
   },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "relax-beauty-spa",
-      // Placeholder for local development. Before deploying, create the real database with
-      //   npx wrangler d1 create relax-beauty-spa --jurisdiction=eu
-      // (the jurisdiction cannot be changed later) and paste its id here.
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
-  ],
-  // Every 15 minutes: retry confirmation emails that failed.
+  // Every 15 minutes: retry emails and Google Calendar/Sheets copies that failed, and from 21:00
+  // (studio time) send the owner the list of the next day's bookings.
   "triggers": { "crons": ["*/15 * * * *"] },
-  // Email settings are not stored here. Locally they are in .dev.vars (see .dev.vars.example).
-  // In production: `npx wrangler secret put RESEND_API_KEY`, and MAIL_FROM and OWNER_EMAIL
-  // as variables in the Cloudflare dashboard (or secrets).
+  // No settings or secrets are stored here. Locally they are in .dev.vars (see
+  // .dev.vars.example); in production they are Worker variables and secrets in the Cloudflare
+  // dashboard. See docs/SETUP.md.
   "observability": { "enabled": true }
 }

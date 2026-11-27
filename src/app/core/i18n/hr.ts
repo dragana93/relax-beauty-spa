@@ -79,7 +79,17 @@ export const hr = {
     hours: 'Radno vrijeme',
     closed: 'Zatvoreno',
     map: 'Otvori na karti',
+    mapTitle: 'Lokacija studija na Google karti',
     days: ['Nedjelja', 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota'],
+  },
+  cookies: {
+    label: 'Kolačići',
+    text: 'Za prikaz karte koristimo Google Maps, koji postavlja vlastite kolačiće i prima vašu IP adresu. Analitičke ni marketinške kolačiće ne koristimo.',
+    accept: 'Prihvati',
+    reject: 'Odbij',
+    more: 'Više o privatnosti',
+    settings: 'Postavke kolačića',
+    mapBlocked: 'Karta se prikazuje nakon što prihvatite kolačiće Google Mapsa.',
   },
   services: {
     title: 'Usluge i cjenik',
@@ -172,7 +182,10 @@ export const hr = {
         h: 'Vaša prava',
         p: 'Možete zatražiti uvid, ispravak ili brisanje podataka te uložiti prigovor nadzornom tijelu (AZOP).',
       },
-      { h: 'Kolačići', p: 'Ne koristimo analitičke ni marketinške kolačiće.' },
+      {
+        h: 'Kolačići i karta',
+        p: 'Ne koristimo analitičke ni marketinške kolačiće. Karta na početnoj stranici dolazi s Google Mapsa (Google Ireland Ltd.) i učitava se samo ako to prihvatite u obavijesti o kolačićima. Tada Google obrađuje vašu IP adresu i može postaviti vlastite kolačiće. Vaš izbor pamtimo samo u vašem pregledniku i možete ga promijeniti u bilo kojem trenutku putem poveznice „Postavke kolačića” u podnožju stranice.',
+      },
       {
         h: 'Pravila rezervacije',
         p: 'Termin je moguće rezervirati najmanje 12 sati i najviše 60 dana unaprijed. Otkazati ga možete najkasnije 24 sata prije početka.',

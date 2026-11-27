@@ -5,7 +5,10 @@ import type { BookingRow } from './templates';
 
 /** 20261130T083000Z */
 function utcStamp(date: Date): string {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return date
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
 }
 
 function escapeText(value: string): string {
@@ -53,11 +56,4 @@ export function bookingIcs(row: BookingRow): string {
     'END:VCALENDAR',
   ];
   return lines.map(fold).join('\r\n') + '\r\n';
-}
-
-/** Base64 of the UTF-8 bytes, as the email provider expects for attachments. */
-export function toBase64(text: string): string {
-  let binary = '';
-  for (const byte of new TextEncoder().encode(text)) binary += String.fromCharCode(byte);
-  return btoa(binary);
 }

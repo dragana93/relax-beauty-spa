@@ -12,13 +12,15 @@ import {
   countUpcoming,
   findByIdempotencyKey,
   insertBooking,
-  occupiedCells,
   type StoredBooking,
 } from '../db/bookings';
-import { deliverBookingEmails } from '../email/booking-emails';
+import { deliverBookingEmailsLater } from '../email/booking-emails';
 import { mailEnabled } from '../email/send';
+import { googleEnabled } from '../google/auth';
+import { syncBookingLater } from '../google/sync';
 import { fail, type AppEnv } from '../http';
 import { createReference } from '../security/reference';
+import { takenCells } from './availability';
 
 // Unknown fields (for example a tampered price or duration) are stripped by zod.
 const bookingSchema = z.object({
@@ -65,7 +67,7 @@ export const bookings = new Hono<AppEnv>().post(
 
     // A retry of an attempt that already succeeded returns the original booking.
     const replay = async () => {
-      const existing = await findByIdempotencyKey(c.env.DB, input.idempotencyKey);
+      const existing = await findByIdempotencyKey(c.var.db, input.idempotencyKey);
       if (!existing) return null;
       const same =
         existing.email === input.email &&
@@ -78,13 +80,13 @@ export const bookings = new Hono<AppEnv>().post(
     if (earlier) return earlier;
 
     const now = new Date();
-    const upcoming = await countUpcoming(c.env.DB, input.email, studioTime(now).date);
+    const upcoming = await countUpcoming(c.var.db, input.email, studioTime(now).date);
     if (upcoming >= SCHEDULE.maxUpcomingPerEmail) return fail(c, 429, 'LIMIT_REACHED');
 
     const starts = availableStarts({
       date: input.date,
       durationMin: service.durationMin,
-      occupied: await occupiedCells(c.env.DB, input.date),
+      occupied: await takenCells(c.env, c.var.db, input.date),
       now,
     });
     if (!starts.includes(input.startMin)) return (await replay()) ?? fail(c, 409, 'SLOT_TAKEN');
@@ -92,7 +94,7 @@ export const bookings = new Hono<AppEnv>().post(
     for (let attempt = 1; attempt <= MAX_REFERENCE_ATTEMPTS; attempt++) {
       const reference = createReference();
       try {
-        await insertBooking(c.env.DB, {
+        await insertBooking(c.var.db, {
           reference,
           idempotencyKey: input.idempotencyKey,
           date: input.date,
@@ -108,8 +110,11 @@ export const bookings = new Hono<AppEnv>().post(
           lang: input.lang,
           createdAt: now.toISOString(),
         });
-        // Emails go out after the response; failures are retried by the cron trigger.
-        if (mailEnabled(c.env)) c.executionCtx.waitUntil(deliverBookingEmails(c.env, reference));
+        // Emails and the Google copies are made after the response, each with its own
+        // database connection; failures are retried by the cron trigger.
+        if (mailEnabled(c.env))
+          c.executionCtx.waitUntil(deliverBookingEmailsLater(c.env, reference));
+        if (googleEnabled(c.env)) c.executionCtx.waitUntil(syncBookingLater(c.env, reference));
         return respond(c, {
           reference,
           email: input.email,
