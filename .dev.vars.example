@@ -1,0 +1,12 @@
+# Copy this file to .dev.vars (which git ignores) and fill in your values.
+# Restart `npm start` after changing it.
+
+# Shows the emails of local bookings at http://localhost:4200/api/dev/emails, without sending.
+EMAIL_PREVIEW=true
+
+# To really send emails, create a free account at https://resend.com and an API key.
+# Without a verified domain, Resend's test sender can only deliver to the email address
+# of your Resend account, so use that address when you make a test booking.
+# RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+# MAIL_FROM="draganasavanovic1993@hotmail.com"
+# OWNER_EMAIL="draganasavanovic1993@hotmail.com"

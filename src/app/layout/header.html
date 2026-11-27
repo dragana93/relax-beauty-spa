@@ -1,0 +1,78 @@
+<header class="bar">
+  <div class="container inner">
+    <a class="brand" [routerLink]="i18n.link('home')" (click)="open.set(false)">
+      <img
+        src="/brand/logo-compact.svg"
+        width="740"
+        height="164"
+        alt="Dijana Savanović – Relax, Beauty and Spa Studio"
+      />
+    </a>
+
+    <button
+      type="button"
+      class="toggle"
+      aria-controls="main-nav"
+      [attr.aria-expanded]="open()"
+      [attr.aria-label]="open() ? i18n.t().nav.closeMenu : i18n.t().nav.openMenu"
+      (click)="open.set(!open())"
+    >
+      <span aria-hidden="true">{{ open() ? '✕' : '☰' }}</span>
+    </button>
+
+    <nav id="main-nav" [class.open]="open()" [attr.aria-label]="i18n.t().nav.main">
+      <a [routerLink]="i18n.link('home')" (click)="open.set(false)">{{ i18n.t().nav.home }}</a>
+      <a [routerLink]="i18n.link('services')" (click)="open.set(false)">
+        {{ i18n.t().nav.services }}
+      </a>
+      <a [routerLink]="i18n.link('home')" fragment="about" (click)="open.set(false)">
+        {{ i18n.t().nav.about }}
+      </a>
+      <a [routerLink]="i18n.link('home')" fragment="contact" (click)="open.set(false)">
+        {{ i18n.t().nav.contact }}
+      </a>
+      <div class="lang-menu">
+        <button
+          type="button"
+          class="lang-toggle"
+          aria-controls="lang-list"
+          [attr.aria-expanded]="langOpen()"
+          [attr.aria-label]="i18n.t().nav.language + ': ' + names[i18n.lang()]"
+          (click)="langOpen.set(!langOpen())"
+        >
+          {{ i18n.lang().toUpperCase() }}
+          <svg class="caret" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <path
+              d="M2.5 4.5 6 8l3.5-3.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <ul id="lang-list" class="langs" [class.open]="langOpen()">
+          @for (lang of langs; track lang) {
+            <li>
+              <a
+                [routerLink]="langLink(lang)"
+                [attr.lang]="lang"
+                [attr.hreflang]="lang"
+                [attr.aria-current]="lang === i18n.lang() ? 'true' : null"
+                [class.current]="lang === i18n.lang()"
+                (click)="close()"
+              >
+                <span class="code" aria-hidden="true">{{ lang.toUpperCase() }}</span>
+                {{ names[lang] }}
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+      <a class="btn" [routerLink]="i18n.link('booking')" (click)="open.set(false)">
+        {{ i18n.t().common.bookShort }}
+      </a>
+    </nav>
+  </div>
+</header>

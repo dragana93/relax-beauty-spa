@@ -1,0 +1,213 @@
+h1:focus,
+h2:focus {
+  outline: none;
+}
+
+.muted {
+  color: var(--taupe);
+}
+
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 0;
+  list-style: none;
+
+  span {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+  }
+
+  [aria-current] span,
+  .done span {
+    border-color: var(--gold-deep);
+    background: var(--gold-deep);
+    color: var(--white);
+  }
+}
+
+.summary {
+  margin: 0 0 1.5rem;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+dt {
+  color: var(--taupe);
+}
+
+dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.options {
+  margin-bottom: 1.5rem;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  width: 100%;
+  min-height: 64px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &[aria-pressed='true'] {
+    border-color: var(--gold-deep);
+  }
+}
+
+.option-name {
+  font-weight: 500;
+}
+
+.option-price {
+  grid-area: 1 / 2 / span 2;
+  align-self: center;
+  color: var(--gold-deep);
+  font-weight: 500;
+}
+
+.days {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 4px 4px 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.day {
+  display: flex;
+  flex: 0 0 68px;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  font: 400 0.85rem/1.4 var(--font-body);
+  scroll-snap-align: start;
+  cursor: pointer;
+
+  strong {
+    font-size: 1.35rem;
+    font-weight: 500;
+  }
+
+  &[aria-pressed='true'] {
+    border-color: var(--gold-deep);
+    background: var(--gold-deep);
+    color: var(--white);
+  }
+}
+
+.times {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 0.5rem;
+}
+
+.nav-actions {
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+form > label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+input:not([type='checkbox']),
+textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #a89574;
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+}
+
+.req {
+  margin-left: 0.2em;
+  color: var(--error);
+}
+
+input[aria-invalid='true'],
+textarea[aria-invalid='true'] {
+  border-color: var(--error);
+  box-shadow: 0 0 0 1px var(--error);
+}
+
+.hint {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.field-error {
+  margin: 0.25rem 0 0;
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+form > .check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: 44px;
+  font-weight: 400;
+
+  input {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin-top: 0.2rem;
+    accent-color: var(--gold-deep);
+  }
+}
+
+.trap {
+  position: absolute;
+  left: -9999px;
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--error);
+  background: var(--white);
+  color: var(--error);
+}
+
+.reference {
+  margin: 0 0 1rem;
+  color: var(--gold-deep);
+  font: 600 2rem var(--font-body);
+  letter-spacing: 0.08em;
+  user-select: all;
+}
+
+.success .card {
+  margin-block: 1.5rem;
+}

@@ -1,0 +1,282 @@
+@let t = i18n.t();
+<div class="container narrow section">
+  @if (result(); as booked) {
+    <div class="center success">
+      <h1 #stepHeading tabindex="-1" class="ornament">{{ t.booking.successTitle }}</h1>
+      <div class="card">
+        <p class="muted">{{ t.booking.reference }}</p>
+        <p class="reference">{{ booked.reference }}</p>
+        <dl>
+          @for (row of summary(); track row.label) {
+            <div>
+              <dt>{{ row.label }}</dt>
+              <dd>{{ row.value }}</dd>
+            </div>
+          }
+        </dl>
+      </div>
+      <p>{{ booked.emailQueued ? t.booking.emailQueued : t.booking.saveReference }}</p>
+      <div class="actions">
+        <a class="btn" [routerLink]="i18n.link('home')">{{ t.booking.backHome }}</a>
+        <button type="button" class="btn btn--ghost" (click)="startOver()">
+          {{ t.booking.another }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="center">
+      <h1 class="ornament">{{ t.booking.title }}</h1>
+      <p class="lead">{{ t.booking.lead }}</p>
+      <noscript>{{ t.booking.noscript }}</noscript>
+    </div>
+
+    <ol class="steps">
+      @for (n of stepNumbers; track n) {
+        <li [class.done]="n < step()" [attr.aria-current]="n === step() ? 'step' : null">
+          <span>{{ n }}</span>
+        </li>
+      }
+    </ol>
+
+    <h2 #stepHeading tabindex="-1">
+      {{
+        [
+          t.booking.steps.service,
+          t.booking.steps.time,
+          t.booking.steps.details,
+          t.booking.steps.confirm,
+        ][step() - 1]
+      }}
+    </h2>
+
+    @if (error(); as code) {
+      <p class="alert" role="alert">{{ t.booking.submitErrors[code] }}</p>
+    }
+
+    @if (step() > 1 && step() < 4) {
+      <dl class="card summary" [attr.aria-label]="t.booking.summary">
+        @for (row of summary(); track row.label) {
+          <div>
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
+    @switch (step()) {
+      @case (1) {
+        @for (group of groups; track group.category.id) {
+          <h3>{{ i18n.pick(group.category.name) }}</h3>
+          <ul class="grid options">
+            @for (item of group.services; track item.id) {
+              <li>
+                <button
+                  type="button"
+                  class="option"
+                  [attr.aria-pressed]="item.id === serviceId()"
+                  (click)="selectService(item.id)"
+                >
+                  <span class="option-name">{{ i18n.pick(item.name) }}</span>
+                  <span class="muted">{{ item.durationMin }} {{ t.common.minutes }}</span>
+                  <span class="option-price">{{ price(item.priceCents) }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
+
+      @case (2) {
+        <h3 id="date-label">{{ t.booking.chooseDate }}</h3>
+        <div class="days" role="group" aria-labelledby="date-label">
+          @for (day of dates(); track day) {
+            <button
+              type="button"
+              class="day"
+              [attr.aria-pressed]="day === date()"
+              [attr.aria-label]="longDate(day)"
+              (click)="selectDate(day)"
+            >
+              <span>{{ i18n.formatDate(day, { weekday: 'short' }) }}</span>
+              <strong>{{ i18n.formatDate(day, { day: 'numeric' }) }}</strong>
+              <span>{{ i18n.formatDate(day, { month: 'short' }) }}</span>
+            </button>
+          }
+        </div>
+
+        @if (date()) {
+          <h3 id="time-label">{{ t.booking.chooseTime }}</h3>
+          <div aria-live="polite">
+            @switch (timesState()) {
+              @case ('loading') {
+                <p>{{ t.booking.loadingTimes }}</p>
+              }
+              @case ('error') {
+                <p class="alert">{{ t.booking.timesError }}</p>
+                <button type="button" class="chip" (click)="loadTimes()">
+                  {{ t.booking.retry }}
+                </button>
+              }
+              @case ('ready') {
+                @if (starts().length) {
+                  <div class="times" role="group" aria-labelledby="time-label">
+                    @for (start of starts(); track start) {
+                      <button
+                        type="button"
+                        class="chip"
+                        [attr.aria-pressed]="start === startMin()"
+                        (click)="selectTime(start)"
+                      >
+                        {{ formatTime(start) }}
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <p>{{ t.booking.noTimes }}</p>
+                }
+              }
+            }
+          </div>
+        }
+
+        <div class="actions nav-actions">
+          <button type="button" class="btn btn--ghost" (click)="goTo(1)">
+            {{ t.booking.back }}
+          </button>
+          <button type="button" class="btn" [disabled]="startMin() === null" (click)="goTo(3)">
+            {{ t.booking.next }}
+          </button>
+        </div>
+      }
+
+      @case (3) {
+        <form [formGroup]="form" (ngSubmit)="submitDetails()" novalidate>
+          <p class="muted hint">{{ t.booking.requiredNote }}</p>
+
+          <!-- The asterisk is visual only; "required" tells screen readers. -->
+          <label for="name">{{ t.booking.name }}<span class="req" aria-hidden="true">*</span></label>
+          <input
+            id="name"
+            formControlName="name"
+            autocomplete="name"
+            required
+            [maxlength]="limits.nameMax"
+            [attr.aria-invalid]="invalid('name')"
+            [attr.aria-describedby]="invalid('name') ? 'name-error' : null"
+          />
+          @if (invalid('name')) {
+            <p class="field-error" id="name-error">{{ errorText('name') }}</p>
+          }
+
+          <label for="email">{{ t.booking.email }}<span class="req" aria-hidden="true">*</span></label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            inputmode="email"
+            required
+            [maxlength]="limits.emailMax"
+            [attr.aria-invalid]="invalid('email')"
+            [attr.aria-describedby]="invalid('email') ? 'email-error' : null"
+          />
+          @if (invalid('email')) {
+            <p class="field-error" id="email-error">{{ errorText('email') }}</p>
+          }
+
+          <label for="phone">{{ t.booking.phone }}<span class="req" aria-hidden="true">*</span></label>
+          <input
+            id="phone"
+            type="tel"
+            formControlName="phone"
+            autocomplete="tel"
+            inputmode="tel"
+            required
+            maxlength="25"
+            [attr.aria-invalid]="invalid('phone')"
+            [attr.aria-describedby]="invalid('phone') ? 'phone-error' : null"
+          />
+          @if (invalid('phone')) {
+            <p class="field-error" id="phone-error">{{ errorText('phone') }}</p>
+          }
+
+          <label for="note">{{ t.booking.note }}</label>
+          <textarea
+            id="note"
+            formControlName="note"
+            rows="3"
+            [maxlength]="limits.noteMax"
+            [attr.aria-invalid]="invalid('note')"
+            aria-describedby="note-hint"
+          ></textarea>
+          <p class="muted hint" id="note-hint">{{ t.booking.noteHint }}</p>
+          @if (invalid('note')) {
+            <p class="field-error">{{ t.booking.errors.note }}</p>
+          }
+
+          <!-- Honeypot for bots; hidden from people and assistive technology. -->
+          <div class="trap" aria-hidden="true">
+            <label
+              >Website <input formControlName="website" tabindex="-1" autocomplete="off"
+            /></label>
+          </div>
+
+          <label class="check">
+            <input
+              id="privacyAck"
+              type="checkbox"
+              formControlName="privacyAck"
+              [attr.aria-invalid]="invalid('privacyAck')"
+            />
+            <span>{{ t.booking.privacyAck }}</span>
+          </label>
+          <a [href]="i18n.link('privacy')" target="_blank" rel="noopener">
+            {{ t.booking.privacyLink }}
+          </a>
+          @if (invalid('privacyAck')) {
+            <p class="field-error" role="alert">{{ t.booking.errors.privacyAck }}</p>
+          }
+
+          <div class="actions nav-actions">
+            <button type="button" class="btn btn--ghost" (click)="goTo(2)">
+              {{ t.booking.back }}
+            </button>
+            <button type="submit" class="btn">{{ t.booking.next }}</button>
+          </div>
+        </form>
+      }
+
+      @case (4) {
+        <dl class="card summary">
+          @for (row of summary(); track row.label) {
+            <div>
+              <dt>{{ row.label }}</dt>
+              <dd>{{ row.value }}</dd>
+            </div>
+          }
+          <div>
+            <dt>{{ t.booking.name }}</dt>
+            <dd>{{ form.controls.name.value }}</dd>
+          </div>
+          <div>
+            <dt>{{ t.booking.email }}</dt>
+            <dd>{{ form.controls.email.value }}</dd>
+          </div>
+          <div>
+            <dt>{{ t.booking.phone }}</dt>
+            <dd>{{ form.controls.phone.value }}</dd>
+          </div>
+        </dl>
+        <div class="actions nav-actions">
+          <button type="button" class="btn btn--ghost" [disabled]="sending()" (click)="goTo(3)">
+            {{ t.booking.back }}
+          </button>
+          <button type="button" class="btn" [disabled]="sending()" (click)="confirm()">
+            {{ sending() ? t.booking.sending : t.booking.confirm }}
+          </button>
+        </div>
+      }
+    }
+  }
+</div>

@@ -1,0 +1,147 @@
+@let t = i18n.t();
+
+<section class="hero center">
+  <div class="container narrow">
+    <img
+      class="hero-logo"
+      src="/brand/logo-full.svg"
+      width="1370"
+      height="848"
+      alt="Dijana Savanović – Relax, Beauty and Spa Studio"
+      fetchpriority="high"
+    />
+    <p class="eyebrow">{{ t.home.eyebrow }}</p>
+    <h1>{{ t.home.title }}</h1>
+    <p class="lead">{{ t.home.lead }}</p>
+    <div class="actions">
+      <a class="btn" [routerLink]="i18n.link('booking')">{{ t.common.book }}</a>
+      <a class="btn btn--ghost" [routerLink]="i18n.link('services')">{{ t.home.explore }}</a>
+    </div>
+  </div>
+</section>
+
+<section class="section section--sand center" aria-labelledby="services-title">
+  <div class="container">
+    <h2 id="services-title" class="ornament">{{ t.home.servicesTitle }}</h2>
+    <p class="lead">{{ t.home.servicesLead }}</p>
+    <ul class="grid grid--4">
+      @for (category of categories; track category.id) {
+        <li>
+          <a
+            class="card category"
+            [routerLink]="i18n.link('services')"
+            [queryParams]="{ category: category.id }"
+          >
+            <h3>{{ i18n.pick(category.name) }}</h3>
+            <span>{{ i18n.pick(category.summary) }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+    <div class="actions after">
+      <a class="btn btn--ghost" [routerLink]="i18n.link('services')">{{ t.home.allServices }}</a>
+    </div>
+  </div>
+</section>
+
+<section class="section center" id="about" aria-labelledby="about-title">
+  <div class="container narrow">
+    <h2 id="about-title" class="ornament">{{ t.home.aboutTitle }}</h2>
+    <p>{{ t.home.aboutText }}</p>
+    <h3>Dijana Savanović</h3>
+    <p>{{ t.home.ownerText }}</p>
+  </div>
+</section>
+
+<section class="section section--sand center" aria-labelledby="gallery-title">
+  <div class="container">
+    <h2 id="gallery-title" class="ornament">{{ t.home.galleryTitle }}</h2>
+    @if (!studio.gallery.length) {
+      <p class="lead">{{ t.home.galleryLead }}</p>
+    }
+    <ul class="grid gallery">
+      @for (photo of photos(); track $index) {
+        <li>
+          @if (photo) {
+            <img [src]="photo.src" [alt]="i18n.pick(photo.alt)" loading="lazy" />
+          } @else {
+            <div class="placeholder" role="img" [attr.aria-label]="t.home.galleryPlaceholder">
+              <img src="/brand/logo-mark.svg" width="240" height="240" alt="" loading="lazy" />
+            </div>
+          }
+        </li>
+      }
+    </ul>
+    @if (canExpand) {
+      <div class="actions after">
+        <button
+          type="button"
+          class="btn btn--ghost"
+          [attr.aria-expanded]="expanded()"
+          (click)="expanded.set(!expanded())"
+        >
+          {{ expanded() ? t.home.showLess : t.home.showAll }}
+        </button>
+      </div>
+    }
+  </div>
+</section>
+
+<section class="section" aria-labelledby="faq-title">
+  <div class="container narrow">
+    <h2 id="faq-title" class="ornament center">{{ t.home.faqTitle }}</h2>
+    @for (item of t.home.faq; track $index) {
+      <details class="faq">
+        <summary>{{ item.q }}</summary>
+        <p>{{ item.a }}</p>
+      </details>
+    }
+  </div>
+</section>
+
+<section class="section section--sand center" id="contact" aria-labelledby="contact-title">
+  <div class="container">
+    <h2 id="contact-title" class="ornament">{{ t.home.contactTitle }}</h2>
+    <div class="grid grid--2">
+      <div class="card">
+        <dl>
+          <dt>{{ t.contact.address }}</dt>
+          <dd>{{ studio.address || t.common.comingSoon }}</dd>
+          <dt>{{ t.contact.phone }}</dt>
+          <dd>
+            @if (studio.phone) {
+              <a [href]="'tel:' + studio.phone.replaceAll(' ', '')">{{ studio.phone }}</a>
+            } @else {
+              {{ t.common.comingSoon }}
+            }
+          </dd>
+          <dt>{{ t.contact.email }}</dt>
+          <dd>
+            @if (studio.email) {
+              <a [href]="'mailto:' + studio.email">{{ studio.email }}</a>
+            } @else {
+              {{ t.common.comingSoon }}
+            }
+          </dd>
+        </dl>
+        @if (studio.mapUrl) {
+          <a [href]="studio.mapUrl" target="_blank" rel="noopener">{{ t.contact.map }}</a>
+        }
+      </div>
+      <div class="card">
+        <h3>{{ t.contact.hours }}</h3>
+        <table>
+          <!-- tbody is required: the browser adds it otherwise, which breaks hydration. -->
+          <tbody>
+            @for (row of hours; track row.day) {
+              <tr>
+                <th scope="row">{{ t.contact.days[row.day] }}</th>
+                <td>{{ row.time ?? t.contact.closed }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

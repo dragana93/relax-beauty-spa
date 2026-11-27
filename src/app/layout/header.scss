@@ -1,0 +1,175 @@
+@use '../../styles/breakpoints' as *;
+
+:host {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: block;
+}
+
+.bar {
+  background: var(--ivory);
+  border-bottom: 1px solid var(--line);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+}
+
+.brand img {
+  display: block;
+  width: min(250px, 66vw);
+  height: auto;
+}
+
+.toggle {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold-deep);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+nav {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+
+  &.open {
+    display: flex;
+  }
+
+  a:not(.btn) {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--ink);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--gold-deep);
+    }
+  }
+
+  .btn {
+    margin-block: 0.5rem;
+  }
+}
+
+.lang-menu {
+  position: relative;
+}
+
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--gold-deep);
+  }
+
+  .caret {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--gold-deep);
+    transition: transform 0.15s;
+  }
+
+  &[aria-expanded='true'] .caret {
+    transform: rotate(180deg);
+  }
+}
+
+.langs {
+  display: none;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ivory);
+
+  &.open {
+    display: block;
+  }
+
+  a:not(.btn) {
+    gap: 0.75rem;
+    padding: 0 0.75rem;
+    border-radius: 8px;
+  }
+
+  a:hover {
+    background: var(--sand);
+  }
+
+  .code {
+    min-width: 1.75rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    color: var(--taupe);
+  }
+
+  a.current {
+    color: var(--gold-deep);
+    font-weight: 500;
+
+    .code {
+      color: var(--gold-deep);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-toggle .caret {
+    transition: none;
+  }
+}
+
+@include from-lg {
+  .toggle {
+    display: none;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+    width: auto;
+    // The phone menu scrolls; on desktop that would clip the language list.
+    max-height: none;
+    overflow: visible;
+  }
+
+  .langs {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 11rem;
+    box-shadow: 0 8px 24px rgb(46 40 34 / 12%);
+  }
+}
