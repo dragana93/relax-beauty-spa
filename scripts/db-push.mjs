@@ -24,7 +24,9 @@ function askHidden(question) {
 }
 
 let url = process.env.SUPABASE_DB_URL?.trim();
-let source = 'the SUPABASE_DB_URL variable of this terminal';
+let source = process.stdin.isTTY
+  ? 'the SUPABASE_DB_URL variable of this terminal'
+  : 'the SUPABASE_DB_URL build variable';
 if (!url) {
   url = readDevVar('SUPABASE_DB_URL')?.trim();
   source = '.dev.vars';
@@ -56,7 +58,7 @@ const shown = url.replace(/^(\w+:\/\/[^:@/]+:)([^@]*)@/, (_m, start, password) =
   return `${start}${'*'.repeat(Math.min(password.length, 12))} (${password.length} characters)@`;
 });
 console.log(`Connection string from ${source}:\n  ${shown}`);
-if (source.startsWith('the SUPABASE')) {
+if (source.endsWith('of this terminal')) {
   console.log('  (To use another string: close this terminal, open a new one and run again.)');
 }
 
@@ -74,6 +76,13 @@ if (/@db\.[a-z0-9]+\.supabase\.co/.test(url)) {
 }
 if (placeholder.test(url)) {
   console.error('Replace [YOUR-PASSWORD] in the connection string with the database password.');
+  process.exit(1);
+}
+if (/^\w+:\/\/[^:@/]+:\[[^@]*\]@/.test(url)) {
+  console.error(
+    'The password is still inside [ ] brackets. Remove the brackets too:\n' +
+      '  wrong: postgres.xxxx:[MyPassword]@...   right: postgres.xxxx:MyPassword@...',
+  );
   process.exit(1);
 }
 if (!/^postgres(ql)?:\/\//.test(url)) {

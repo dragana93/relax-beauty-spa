@@ -54,6 +54,8 @@ export async function useDb<R>(env: DbEnv, fn: (db: Sql) => Promise<R>): Promise
   if (env.DB) return fn(env.DB);
   if (!env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
   const client = postgres(env.DATABASE_URL, {
+    // Encrypted connection to Supabase, so the password never travels in plain text.
+    ssl: /\.supabase\.(com|co)[:/]/.test(env.DATABASE_URL) ? 'require' : false,
     prepare: false, // required by Supabase's transaction pooler
     max: 1,
     fetch_types: false,

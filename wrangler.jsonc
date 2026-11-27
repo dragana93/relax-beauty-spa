@@ -5,6 +5,9 @@
   "compatibility_date": "2026-11-01",
   // postgres.js (the Supabase connection) needs Node.js APIs and TCP sockets.
   "compatibility_flags": ["nodejs_compat"],
+  // Keep the variables set in the Cloudflare dashboard (MAIL_FROM, OWNER_EMAIL, GOOGLE_*) when
+  // a new version is deployed. Without this, every deploy would delete them.
+  "keep_vars": true,
   "assets": {
     "directory": "dist/relax-beauty-spa/browser",
     "html_handling": "drop-trailing-slash",
